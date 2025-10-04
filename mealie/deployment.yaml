@@ -20,3 +20,25 @@ spec:
         name: mealie
         ports: 
           - containerPort: 9000
+        env:
+          - name: ALLOW_SIGNUP
+            value: "true"
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: TZ
+            value: "UTC"
+          - name: MAX_WORKERS
+            value: "1"
+          - name: WEB_CONCURRENCY
+            value: "1"
+          - name: BASE_URL
+            value: "http://192.168.1.11:30925"
+        volumeMounts:
+          - mountPath: /app/data
+            name: mealie-data
+      volumes:
+        - name: mealie-data
+          persistentVolumeClaim:
+            claimName: mealie-data
