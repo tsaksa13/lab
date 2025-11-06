@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs-subdir-external-provisioner-large
+  namespace: nfs-system
+  labels:
+    app: nfs-subdir-external-provisioner-large
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nfs-subdir-external-provisioner-large
+  template:
+    metadata:
+      labels:
+        app: nfs-subdir-external-provisioner-large
+    spec:
+      serviceAccountName: nfs-subdir-external-provisioner
+      containers:
+        - name: nfs-subdir-external-provisioner
+          image: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
+          volumeMounts:
+            - name: nfs-subdir
+              mountPath: /persistentvolumes
+          env:
+            - name: PROVISIONER_NAME
+              value: k8s-sigs.io/nfs-subdir-external-provisioner-large
+            - name: NFS_SERVER
+              value: 192.168.1.5
+            - name: NFS_PATH
+              value: /data0/share/immich
+      volumes:
+        - name: nfs-subdir
+          nfs:
+            server: 192.168.1.5
+            path: /data0/share/immich

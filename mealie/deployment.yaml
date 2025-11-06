@@ -16,13 +16,13 @@ spec:
         app: mealie
     spec:
       containers:
-      - image: ghcr.io/mealie-recipes/mealie:v3.2.1
+      - image: ghcr.io/mealie-recipes/mealie:v3.4.0
         name: mealie
         ports: 
           - containerPort: 9000
         env:
           - name: ALLOW_SIGNUP
-            value: "true"
+            value: "false"
           - name: PUID
             value: "1000"
           - name: PGID
