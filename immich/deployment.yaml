@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: immich
+  name: immich
+  namespace: immich
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immich
+  template:
+    metadata:
+      labels:
+        app: immich
+    spec:
+      containers:
+      - image: ghcr.io/immich-app/immich-server:latest
+        name: immich
+        ports: 
+          - containerPort: 3000
+        env:
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: TZ
+            value: "UTC"
+          - name: BASE_URL  
+            value: "http://immich.local"
+        volumeMounts:
+          - mountPath: /app/data
