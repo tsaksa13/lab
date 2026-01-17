@@ -9,10 +9,16 @@ echo "Ollama Podman Compose Service Setup"
 echo "=========================================="
 echo ""
 
+# Create /opt/ollama directory if it doesn't exist
+if [ ! -d /opt/ollama ]; then
+    echo "Creating /opt/ollama directory..."
+    sudo mkdir -p /opt/ollama
+fi
+
 # Check if compose file exists
-if [ ! -f /opt/compose.yml ]; then
-    echo "ERROR: /opt/compose.yml not found!"
-    echo "Please ensure your compose file is at /opt/compose.yml before running this script."
+if [ ! -f /opt/ollama/compose.yml ]; then
+    echo "ERROR: /opt/ollama/compose.yml not found!"
+    echo "Please ensure your compose file is at /opt/ollama/compose.yml before running this script."
     exit 1
 fi
 
@@ -30,9 +36,14 @@ else
     sudo useradd -r -s /sbin/nologin -d /opt/podman-svc -m podman-svc
 fi
 
+# Set ownership and permissions of /opt/ollama directory
+echo "Setting ownership and permissions of /opt/ollama..."
+sudo chown podman-svc:podman-svc /opt/ollama
+sudo chmod 700 /opt/ollama
+
 # Set ownership of compose file
-echo "Setting ownership of /opt/compose.yml..."
-sudo chown podman-svc:podman-svc /opt/compose.yml
+echo "Setting ownership of /opt/ollama/compose.yml..."
+sudo chown podman-svc:podman-svc /opt/ollama/compose.yml
 
 # Enable lingering for the service account
 echo "Enabling lingering for podman-svc..."
@@ -78,9 +89,9 @@ Wants=network-online.target
 Type=forking
 User=podman-svc
 Group=podman-svc
-WorkingDirectory=/opt
-ExecStart=/usr/bin/podman-compose -f /opt/compose.yml up -d
-ExecStop=/usr/bin/podman-compose -f /opt/compose.yml down
+WorkingDirectory=/opt/ollama
+ExecStart=/usr/bin/podman-compose -f /opt/ollama/compose.yml up -d
+ExecStop=/usr/bin/podman-compose -f /opt/ollama/compose.yml down
 Restart=on-failure
 RestartSec=10
 TimeoutStartSec=300
@@ -107,7 +118,7 @@ echo ""
 echo "Next steps:"
 echo ""
 echo "1. Pull container images:"
-echo "   sudo -u podman-svc podman-compose -f /opt/compose.yml pull"
+echo "   sudo -u podman-svc podman-compose -f /opt/ollama/compose.yml pull"
 echo ""
 echo "2. Start the service:"
 echo "   sudo systemctl start ollama.service"
@@ -124,5 +135,5 @@ echo ""
 echo "Useful commands:"
 echo "  - Stop service: sudo systemctl stop ollama.service"
 echo "  - Restart service: sudo systemctl restart ollama.service"
-echo "  - View compose logs: sudo -u podman-svc podman-compose -f /opt/compose.yml logs -f"
+echo "  - View compose logs: sudo -u podman-svc podman-compose -f /opt/ollama/compose.yml logs -f"
 echo ""
