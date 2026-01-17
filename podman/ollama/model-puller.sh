@@ -59,6 +59,9 @@ echo "=== REASONING MODEL ==="
 # DeepSeek R1 Distill Qwen 7B - Reasoning-focused, fits in 4GB
 pull_model "deepseek-r1:7b" "Chain-of-thought reasoning, problem solving (fits 4GB VRAM)"
 
+# Optional: Text Embedding Model for semantic search (if VRAM allows)
+pull_model "nomic-embed-text" "Text embedding model for semantic search and retrieval"
+
 echo ""
 echo "=========================================="
 echo "Download Complete!"
