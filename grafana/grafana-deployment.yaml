@@ -10,6 +10,19 @@ spec:
     requests:
       storage: 1Gi
 ---
+# Enables the Performance Co-Pilot app plugin at startup,
+# so you don't have to click "Enable" in the UI.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-plugin-provisioning
+data:
+  pcp.yaml: |
+    apiVersion: 1
+    apps:
+      - type: performancecopilot-pcp-app
+        disabled: false
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,6 +46,11 @@ spec:
         - name: grafana
           image: grafana/grafana:latest
           imagePullPolicy: IfNotPresent
+          env:
+            # Installs the PCP plugin before Grafana starts serving.
+            # It lands in /var/lib/grafana/plugins, which is on the PVC.
+            - name: GF_PLUGINS_PREINSTALL_SYNC
+              value: performancecopilot-pcp-app
           ports:
             - containerPort: 3000
               name: http-grafana
@@ -62,10 +80,16 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/grafana
               name: grafana-pv
+            - mountPath: /etc/grafana/provisioning/plugins
+              name: plugin-provisioning
+              readOnly: true
       volumes:
         - name: grafana-pv
           persistentVolumeClaim:
             claimName: grafana-pvc
+        - name: plugin-provisioning
+          configMap:
+            name: grafana-plugin-provisioning
 ---
 apiVersion: v1
 kind: Service
@@ -80,3 +104,30 @@ spec:
     app: grafana
   sessionAffinity: None
   type: LoadBalancer
+---
+# Gives pmproxy on mysterion a stable in-cluster name:
+#   http://pmproxy:44322  (same namespace as Grafana)
+apiVersion: v1
+kind: Service
+metadata:
+  name: pmproxy
+spec:
+  ports:
+    - name: http
+      port: 44322
+      protocol: TCP
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: pmproxy-mysterion
+  labels:
+    kubernetes.io/service-name: pmproxy
+addressType: IPv4
+ports:
+  - name: http
+    port: 44322
+    protocol: TCP
+endpoints:
+  - addresses:
+      - "192.168.1.10"   # CHANGE ME: mysterion's IP (hostname -I)
