@@ -38,6 +38,10 @@ spec:
       labels:
         app: grafana
     spec:
+      # Share the laptop's network so http://127.0.0.1:44322 reaches pmproxy.
+      # Grafana itself is then served on the laptop's port 3000 directly.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         fsGroup: 472
         supplementalGroups:
@@ -103,31 +107,6 @@ spec:
   selector:
     app: grafana
   sessionAffinity: None
-  type: LoadBalancer
----
-# Gives pmproxy on mysterion a stable in-cluster name:
-#   http://pmproxy:44322  (same namespace as Grafana)
-apiVersion: v1
-kind: Service
-metadata:
-  name: pmproxy
-spec:
-  ports:
-    - name: http
-      port: 44322
-      protocol: TCP
----
-apiVersion: discovery.k8s.io/v1
-kind: EndpointSlice
-metadata:
-  name: pmproxy-mysterion
-  labels:
-    kubernetes.io/service-name: pmproxy
-addressType: IPv4
-ports:
-  - name: http
-    port: 44322
-    protocol: TCP
-endpoints:
-  - addresses:
-      - "192.168.1.10"   # CHANGE ME: mysterion's IP (hostname -I)
+  # ClusterIP, not LoadBalancer: with hostNetwork, Grafana already owns the
+  # laptop's port 3000, and k3s's ServiceLB would try to bind the same port.
+  type: ClusterIP
